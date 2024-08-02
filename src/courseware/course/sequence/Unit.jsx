@@ -1,23 +1,28 @@
-import { getConfig } from '@edx/frontend-platform';
-import { injectIntl, intlShape } from '@edx/frontend-platform/i18n';
-import { AppContext, ErrorPage } from '@edx/frontend-platform/react';
-import { Modal } from '@edx/paragon';
-import PropTypes from 'prop-types';
+import { getConfig } from "@edx/frontend-platform";
+import { injectIntl, intlShape } from "@edx/frontend-platform/i18n";
+import { AppContext, ErrorPage } from "@edx/frontend-platform/react";
+import { Modal } from "@edx/paragon";
+import PropTypes from "prop-types";
 import React, {
-  Suspense, useCallback, useContext, useEffect, useLayoutEffect, useState,
-} from 'react';
-import { useDispatch } from 'react-redux';
-import { processEvent } from '../../../course-home/data/thunks';
-import { useEventListener } from '../../../generic/hooks';
-import { useModel } from '../../../generic/model-store';
-import PageLoading from '../../../generic/PageLoading';
-import { fetchCourse } from '../../data';
-import BookmarkButton from '../bookmark/BookmarkButton';
-import ShareButton from '../share/ShareButton';
-import messages from './messages';
+  Suspense,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
+import { useDispatch } from "react-redux";
+import { processEvent } from "../../../course-home/data/thunks";
+import { useEventListener } from "../../../generic/hooks";
+import { useModel } from "../../../generic/model-store";
+import PageLoading from "../../../generic/PageLoading";
+import { fetchCourse } from "../../data";
+import BookmarkButton from "../bookmark/BookmarkButton";
+import ShareButton from "../share/ShareButton";
+import messages from "./messages";
 
-const HonorCode = React.lazy(() => import('./honor-code'));
-const LockPaywall = React.lazy(() => import('./lock-paywall'));
+const HonorCode = React.lazy(() => import("./honor-code"));
+const LockPaywall = React.lazy(() => import("./lock-paywall"));
 
 /**
  * Feature policy for iframe, allowing access to certain courseware-related media.
@@ -29,9 +34,8 @@ const LockPaywall = React.lazy(() => import('./lock-paywall'));
  * This policy was selected in conference with the edX Security Working Group.
  * Changes to it should be vetted by them (security@edx.org).
  */
-const IFRAME_FEATURE_POLICY = (
-  'microphone *; camera *; midi *; geolocation *; encrypted-media *'
-);
+const IFRAME_FEATURE_POLICY =
+  "microphone *; camera *; midi *; geolocation *; encrypted-media *";
 
 /**
  * We discovered an error in Firefox where - upon iframe load - React would cease to call any
@@ -61,7 +65,13 @@ const IFRAME_FEATURE_POLICY = (
 function useLoadBearingHook(id) {
   const setValue = useState(0)[1];
   useLayoutEffect(() => {
-    setValue(currentValue => currentValue + 1);
+    setValue((currentValue) => currentValue + 1);
+    // QUERIUM - This should scroll the iframe to the top of the page
+    document.getElementById("unit-iframe").scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+      inline: "nearest",
+    });
   }, [id]);
 }
 
@@ -70,20 +80,19 @@ export function sendUrlHashToFrame(frame) {
   if (hash) {
     // The url hash will be sent to LMS-served iframe in order to find the location of the
     // hash within the iframe.
-    frame.contentWindow.postMessage({ hashName: hash }, `${getConfig().LMS_BASE_URL}`);
+    frame.contentWindow.postMessage(
+      { hashName: hash },
+      `${getConfig().LMS_BASE_URL}`
+    );
   }
 }
 
-const Unit = ({
-  courseId,
-  format,
-  onLoaded,
-  id,
-  intl,
-}) => {
+const Unit = ({ courseId, format, onLoaded, id, intl }) => {
   const { authenticatedUser } = useContext(AppContext);
-  const view = authenticatedUser ? 'student_view' : 'public_view';
-  let iframeUrl = `${getConfig().LMS_BASE_URL}/xblock/${id}?show_title=0&show_bookmark_button=0&recheck_access=1&view=${view}`;
+  const view = authenticatedUser ? "student_view" : "public_view";
+  let iframeUrl = `${
+    getConfig().LMS_BASE_URL
+  }/xblock/${id}?show_title=0&show_bookmark_button=0&recheck_access=1&view=${view}`;
   if (format) {
     iframeUrl += `&format=${format}`;
   }
@@ -95,12 +104,9 @@ const Unit = ({
   const [shouldDisplayHonorCode, setShouldDisplayHonorCode] = useState(false);
   const [windowTopOffset, setWindowTopOffset] = useState(null);
 
-  const unit = useModel('units', id);
-  const course = useModel('coursewareMeta', courseId);
-  const {
-    contentTypeGatingEnabled,
-    userNeedsIntegritySignature,
-  } = course;
+  const unit = useModel("units", id);
+  const course = useModel("coursewareMeta", courseId);
+  const { contentTypeGatingEnabled, userNeedsIntegritySignature } = course;
 
   const dispatch = useDispatch();
   // Do not remove this hook.  See function description.
@@ -114,108 +120,121 @@ const Unit = ({
     }
   }, [userNeedsIntegritySignature]);
 
-  const receiveMessage = useCallback(({ data }) => {
-    const {
-      type,
-      payload,
-    } = data;
-    if (type === 'plugin.resize') {
-      setIframeHeight(payload.height);
+  const receiveMessage = useCallback(
+    ({ data }) => {
+      const { type, payload } = data;
+      if (type === "plugin.resize") {
+        setIframeHeight(payload.height);
 
-      // We observe exit from the video xblock full screen mode
-      // and do page scroll to the previously saved scroll position
-      if (windowTopOffset !== null) {
-        window.scrollTo(0, Number(windowTopOffset));
-      }
-
-      if (!hasLoaded && iframeHeight === 0 && payload.height > 0) {
-        setHasLoaded(true);
-        if (onLoaded) {
-          onLoaded();
+        // We observe exit from the video xblock full screen mode
+        // and do page scroll to the previously saved scroll position
+        if (windowTopOffset !== null) {
+          window.scrollTo(0, Number(windowTopOffset));
         }
+
+        if (!hasLoaded && iframeHeight === 0 && payload.height > 0) {
+          setHasLoaded(true);
+          if (onLoaded) {
+            onLoaded();
+          }
+        }
+      } else if (type === "plugin.modal") {
+        payload.open = true;
+        setModalOptions(payload);
+      } else if (type === "plugin.videoFullScreen") {
+        // We listen for this message from LMS to know when we need to
+        // save or reset scroll position on toggle video xblock full screen mode.
+        setWindowTopOffset(payload.open ? window.scrollY : null);
+      } else if (data.offset) {
+        // We listen for this message from LMS to know when the page needs to
+        // be scrolled to another location on the page.
+        window.scrollTo(
+          0,
+          data.offset + document.getElementById("unit-iframe").offsetTop
+        );
       }
-    } else if (type === 'plugin.modal') {
-      payload.open = true;
-      setModalOptions(payload);
-    } else if (type === 'plugin.videoFullScreen') {
-      // We listen for this message from LMS to know when we need to
-      // save or reset scroll position on toggle video xblock full screen mode.
-      setWindowTopOffset(payload.open ? window.scrollY : null);
-    } else if (data.offset) {
-      // We listen for this message from LMS to know when the page needs to
-      // be scrolled to another location on the page.
-      window.scrollTo(0, data.offset + document.getElementById('unit-iframe').offsetTop);
-    }
-  }, [id, setIframeHeight, hasLoaded, iframeHeight, setHasLoaded, onLoaded, setWindowTopOffset, windowTopOffset]);
-  useEventListener('message', receiveMessage);
+    },
+    [
+      id,
+      setIframeHeight,
+      hasLoaded,
+      iframeHeight,
+      setHasLoaded,
+      onLoaded,
+      setWindowTopOffset,
+      windowTopOffset,
+    ]
+  );
+  useEventListener("message", receiveMessage);
   useEffect(() => {
-    sendUrlHashToFrame(document.getElementById('unit-iframe'));
+    sendUrlHashToFrame(document.getElementById("unit-iframe"));
   }, [id, setIframeHeight, hasLoaded, iframeHeight, setHasLoaded, onLoaded]);
 
   return (
     <div className="unit">
       <h1 className="mb-0 h3">{unit.title}</h1>
-      <h2 className="sr-only">{intl.formatMessage(messages.headerPlaceholder)}</h2>
+      <h2 className="sr-only">
+        {intl.formatMessage(messages.headerPlaceholder)}
+      </h2>
       <BookmarkButton
         unitId={unit.id}
         isBookmarked={unit.bookmarked}
-        isProcessing={unit.bookmarkedUpdateState === 'loading'}
+        isProcessing={unit.bookmarkedUpdateState === "loading"}
       />
       {/* TODO: social share exp. Need to remove later */}
-      {(window.expSocialShareAboutUrls && window.expSocialShareAboutUrls[unit.id] !== undefined) && (
-        <ShareButton url={window.expSocialShareAboutUrls[unit.id]} />
-      )}
+      {window.expSocialShareAboutUrls &&
+        window.expSocialShareAboutUrls[unit.id] !== undefined && (
+          <ShareButton url={window.expSocialShareAboutUrls[unit.id]} />
+        )}
       {contentTypeGatingEnabled && unit.containsContentTypeGatedContent && (
         <Suspense
-          fallback={(
+          fallback={
             <PageLoading
               srMessage={intl.formatMessage(messages.loadingLockedContent)}
             />
-          )}
+          }
         >
           <LockPaywall courseId={courseId} />
         </Suspense>
       )}
       {shouldDisplayHonorCode && (
         <Suspense
-          fallback={(
+          fallback={
             <PageLoading
               srMessage={intl.formatMessage(messages.loadingHonorCode)}
             />
-          )}
+          }
         >
           <HonorCode courseId={courseId} />
         </Suspense>
       )}
       {!shouldDisplayHonorCode && !hasLoaded && !showError && (
-        <PageLoading
-          srMessage={intl.formatMessage(messages.loadingSequence)}
-        />
+        <PageLoading srMessage={intl.formatMessage(messages.loadingSequence)} />
       )}
-      {!shouldDisplayHonorCode && !hasLoaded && showError && (
-        <ErrorPage />
-      )}
+      {!shouldDisplayHonorCode && !hasLoaded && showError && <ErrorPage />}
       {modalOptions.open && (
         <Modal
-          body={(
+          body={
             <>
-              {modalOptions.body
-                ? <div className="unit-modal">{ modalOptions.body }</div>
-                : (
-                  <iframe
-                    title={modalOptions.title}
-                    allow={IFRAME_FEATURE_POLICY}
-                    frameBorder="0"
-                    src={modalOptions.url}
-                    style={{
-                      width: '100%',
-                      height: '100vh',
-                    }}
-                  />
-                )}
+              {modalOptions.body ? (
+                <div className="unit-modal">{modalOptions.body}</div>
+              ) : (
+                <iframe
+                  title={modalOptions.title}
+                  allow={IFRAME_FEATURE_POLICY}
+                  frameBorder="0"
+                  src={modalOptions.url}
+                  style={{
+                    width: "100%",
+                    height: "100vh",
+                  }}
+                />
+              )}
             </>
-          )}
-          onClose={() => { setModalOptions({ open: false }); }}
+          }
+          onClose={() => {
+            setModalOptions({ open: false });
+          }}
           open
           dialogClassName="modal-lti"
         />
@@ -228,7 +247,9 @@ const Unit = ({
             src={iframeUrl}
             allow={IFRAME_FEATURE_POLICY}
             allowFullScreen
-            height={iframeHeight}
+            // QUERIUM - This should size the iframe to match the window size
+            /* height={iframeHeight} */
+            style={{ height: "100dvh" }}
             scrolling="no"
             referrerPolicy="origin"
             onLoad={() => {
