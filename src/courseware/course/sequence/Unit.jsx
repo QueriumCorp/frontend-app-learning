@@ -240,7 +240,7 @@ const Unit = ({ courseId, format, onLoaded, id, intl }) => {
         />
       )}
       {!shouldDisplayHonorCode && (
-        <div className="unit-iframe-wrapper">
+        <div className="unit-iframe-wrapper KentFuka">
           <iframe
             id="unit-iframe"
             title={unit.title}
