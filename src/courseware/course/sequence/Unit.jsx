@@ -248,8 +248,9 @@ const Unit = ({ courseId, format, onLoaded, id, intl }) => {
             allow={IFRAME_FEATURE_POLICY}
             allowFullScreen
             // QUERIUM - This should size the iframe to match the window size
+            height="1048"
             /* height={iframeHeight} */
-            style={{ height: "100dvh" }}
+            /* style={{ height: "100dvh" }} */
             scrolling="no"
             referrerPolicy="origin"
             onLoad={() => {
