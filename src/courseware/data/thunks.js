@@ -103,16 +103,20 @@ export function fetchCourse(courseId) {
           // We'll redirect them in a moment to the outline tab by calling fetchCourseDenied() below.
           logInfo(learningSequencesOutlineResult.reason);
         } else {
+          alert('!response && response.status === 403');
           logError(learningSequencesOutlineResult.reason);
         }
       }
       if (!fetchedMetadata) {
+        alert('!fetchedMetadata');
         logError(courseMetadataResult.reason);
       }
       if (!fetchedCourseHomeMetadata) {
+        alert('!fetchedCourseHomeMetadata');
         logError(courseHomeMetadataResult.reason);
       }
       if (!fetchedCoursewareOutlineSidebarTogglesResult) {
+        alert('!fetchedCoursewareOutlineSidebarTogglesResult');
         logError(coursewareOutlineSidebarTogglesResult.reason);
       }
       if (fetchedMetadata && fetchedCourseHomeMetadata) {
@@ -123,11 +127,13 @@ export function fetchCourse(courseId) {
         }
         // User either doesn't have access or only has partial access
         // (can't access course blocks)
+        alert('fetchedMetadata && fetchedCourseHomeMetadata');
         dispatch(fetchCourseDenied({ courseId }));
         return;
       }
 
       // Definitely an error happening
+      alert('fetchCourseFailure');
       dispatch(fetchCourseFailure({ courseId }));
     });
   };
@@ -142,6 +148,7 @@ export function fetchSequence(sequenceId) {
         // Some other block types (particularly 'chapter') can be returned
         // by this API. We want to error in that case, since downstream
         // courseware code is written to render Sequences of Units.
+        alert('Requested sequence has wrong block type');
         logError(
           `Requested sequence '${sequenceId}' `
           + `has block type '${sequence.blockType}'; expected block type 'sequential'.`,
@@ -164,6 +171,7 @@ export function fetchSequence(sequenceId) {
       // about the opaque key structure). In such cases, the backend gives us a 422.
       const sequenceMightBeUnit = error?.response?.status === 422;
       if (!sequenceMightBeUnit) {
+        alert('!sequenceMightBeUnit');
         logError(error);
       }
       dispatch(fetchSequenceFailure({ sequenceId, sequenceMightBeUnit }));
@@ -190,6 +198,7 @@ export function checkBlockCompletion(courseId, sequenceId, unitId) {
       dispatch(updateCourseOutlineCompletion({ sequenceId, unitId, isComplete }));
       return isComplete;
     } catch (error) {
+      alert('checkBlockCompletion error');
       logError(error);
     }
     return {};
@@ -220,6 +229,7 @@ export function saveSequencePosition(courseId, sequenceId, activeUnitIndex) {
         },
       }));
     } catch (error) {
+      alert('saveSequencePosition error');
       logError(error);
       dispatch(updateModel({
         modelType: 'sequences',
@@ -249,6 +259,7 @@ export function saveIntegritySignature(courseId, isMasquerading) {
         },
       }));
     } catch (error) {
+      alert('saveIntegritySignature error');
       logError(error);
     }
   };
@@ -269,6 +280,7 @@ export function getCourseDiscussionTopics(courseId) {
         }));
       }
     } catch (error) {
+      alert('getCourseDiscussionTopics error');
       logError(error);
     }
   };
@@ -281,6 +293,7 @@ export function getCourseOutlineStructure(courseId) {
       const courseOutline = await getCourseOutline(courseId);
       dispatch(fetchCourseOutlineSuccess({ courseOutline }));
     } catch (error) {
+      alert('getCourseOutlineStructure error');
       logError(error);
       dispatch(fetchCourseOutlineFailure());
     }
