@@ -107,6 +107,7 @@ export function fetchCourse(courseId) {
       }
 
       // Definitely an error happening
+      logError('fetchCourseFailure occured for ${courseId}');
       dispatch(fetchCourseFailure({ courseId }));
     });
   };
