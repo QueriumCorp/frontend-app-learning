@@ -98,17 +98,20 @@ export function fetchCourse(courseId) {
         if (courseHomeMetadataResult.value.courseAccess.hasAccess && fetchedOutline) {
           // User has access
           dispatch(fetchCourseSuccess({ courseId }));
+          logInfo('dispatched fetchCourseSuccess ${courseId}');
           return;
         }
         // User either doesn't have access or only has partial access
         // (can't access course blocks)
         dispatch(fetchCourseDenied({ courseId }));
+        logInfo('dispatched fetchCourseDenied ${courseId}');
         return;
       }
 
       // Definitely an error happening
       logError('fetchCourseFailure occured for ${courseId}');
-      dispatch(fetchCourseFailure({ courseId }));
+      // DO NOT DO THIS - DEBUGGING - KENT
+      // dispatch(fetchCourseFailure({ courseId }));
     });
   };
 }
