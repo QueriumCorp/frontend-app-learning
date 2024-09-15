@@ -103,38 +103,36 @@ export function fetchCourse(courseId) {
           // We'll redirect them in a moment to the outline tab by calling fetchCourseDenied() below.
           logInfo(learningSequencesOutlineResult.reason);
         } else {
-          alert('!response && response.status === 403');
           logError(learningSequencesOutlineResult.reason);
         }
       }
       if (!fetchedMetadata) {
-        alert('!fetchedMetadata');
         logError(courseMetadataResult.reason);
       }
       if (!fetchedCourseHomeMetadata) {
-        alert('!fetchedCourseHomeMetadata');
         logError(courseHomeMetadataResult.reason);
       }
       if (!fetchedCoursewareOutlineSidebarTogglesResult) {
-        alert('!fetchedCoursewareOutlineSidebarTogglesResult');
         logError(coursewareOutlineSidebarTogglesResult.reason);
       }
       if (fetchedMetadata && fetchedCourseHomeMetadata) {
         if (courseHomeMetadataResult.value.courseAccess.hasAccess && fetchedOutline) {
           // User has access
           dispatch(fetchCourseSuccess({ courseId }));
+          logInfo('dispatched fetchCourseSuccess ${courseId}');
           return;
         }
         // User either doesn't have access or only has partial access
         // (can't access course blocks)
-        alert('fetchedMetadata && fetchedCourseHomeMetadata');
         dispatch(fetchCourseDenied({ courseId }));
+        logInfo('dispatched fetchCourseDenied ${courseId}');
         return;
       }
 
       // Definitely an error happening
-      alert('fetchCourseFailure');
-      dispatch(fetchCourseFailure({ courseId }));
+      logError('fetchCourseFailure ${courseId}');
+      // DONT DO THIS - DEBUGGING - KENT
+      // dispatch(fetchCourseFailure({ courseId }));
     });
   };
 }
