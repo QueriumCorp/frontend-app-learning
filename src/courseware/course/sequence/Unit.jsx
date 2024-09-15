@@ -35,7 +35,7 @@ const LockPaywall = React.lazy(() => import("./lock-paywall"));
  * Changes to it should be vetted by them (security@edx.org).
  */
 const IFRAME_FEATURE_POLICY =
-  "microphone *; camera *; midi *; geolocation *; encrypted-media *";
+  "microphone *; camera *; midi *; geolocation *; encrypted-media *;";
 
 /**
  * We discovered an error in Firefox where - upon iframe load - React would cease to call any
