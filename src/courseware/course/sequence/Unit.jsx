@@ -95,7 +95,8 @@ const Unit = ({ courseId, format, onLoaded, id, intl }) => {
   }/xblock/${id}?show_title=0&show_bookmark_button=0&recheck_access=1&view=${view}`;
   if (format) {
     iframeUrl += `&format=${format}`;
-  }
+  };
+  console.log('Unit iframeUrl=',iframeUrl);
 
   const [iframeHeight, setIframeHeight] = useState(0);
   const [hasLoaded, setHasLoaded] = useState(false);
